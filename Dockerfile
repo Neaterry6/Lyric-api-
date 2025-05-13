@@ -14,5 +14,5 @@ COPY . /app/
 # Expose Flask port
 EXPOSE 5000
 
-# Run Flask app
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"
+# ✅ Fix Gunicorn startup command
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
