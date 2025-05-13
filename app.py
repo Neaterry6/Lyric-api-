@@ -3,10 +3,12 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# ✅ Free Lyrics API Sources
 LYRICS_OVH_URL = "https://api.lyrics.ovh/v1/"
 VAGALUME_URL = "https://api.vagalume.com.br/search.php?art={artist}&mus={song}"
 
 def parse_query(query):
+    """Extract artist & song from simple user input like 'lyrics Baby Girl by Joeboy'."""
     try:
         if " by " in query:
             song, artist = query.split(" by ", 1)
@@ -18,24 +20,25 @@ def parse_query(query):
 @app.route("/lyrics", methods=["GET"])
 def get_lyrics():
     query = request.args.get("query")
+    
     if not query:
-        return jsonify({"error": "Provide song name with 'by' format!"}), 400
+        return jsonify({"error": "Provide song name in 'lyrics <song> by <artist>' format!"}), 400
 
     artist, song = parse_query(query)
     if not artist or not song:
-        return jsonify({"error": "Invalid query format! Try: lyrics Baby Girl by Joeboy"}), 400
+        return jsonify({"error": "Invalid format! Example: lyrics Baby Girl by Joeboy"}), 400
 
     lyrics_data = {}
 
     try:
         # ✅ Fetch lyrics from Lyrics.ovh
         ovh_response = requests.get(f"{LYRICS_OVH_URL}{artist}/{song}")
-        if ovh_response.status_code == 200:
+        if ovh_response.status_code == 200 and "lyrics" in ovh_response.json():
             lyrics_data["Lyrics.ovh"] = ovh_response.json()
 
         # ✅ Fetch lyrics from Vagalume API
         vagalume_response = requests.get(VAGALUME_URL.format(artist=artist, song=song))
-        if vagalume_response.status_code == 200:
+        if vagalume_response.status_code == 200 and "mus" in vagalume_response.json():
             lyrics_data["Vagalume"] = vagalume_response.json()
 
         if lyrics_data:
@@ -48,4 +51,4 @@ def get_lyrics():
         return jsonify({"error": f"Server crashed: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True
+    app.run(host="0.0.0.0", port=5000, debug=True)
